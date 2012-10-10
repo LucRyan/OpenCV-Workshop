@@ -1,0 +1,249 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1128
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset134 STHeitiSC-Light;}
+{\colortbl;\red255\green255\blue255;\red0\green116\blue0;\red100\green56\blue32;\red196\green26\blue22;
+\red170\green13\blue145;\red92\green38\blue153;\red28\green0\blue207;\red46\green13\blue110;\red38\green71\blue75;
+\red63\green110\blue116;}
+\margl1440\margr1440\vieww9000\viewh8400\viewkind0
+\deftab560
+\pard\tx560\pardeftab560\pardirnatural
+
+\f0\fs22 \cf2 \CocoaLigature0 //\cf0 \
+\cf2 //  lowPassFilter.cpp\cf0 \
+\cf2 //  OpenCV\cf0 \
+\cf2 //\cf0 \
+\cf2 //  Created by WANG Yang on 2/21/12.\cf0 \
+\cf2 //  Copyright 2012 Stevens Institute of Technology. All rights reserved.\cf0 \
+\cf2 //\cf0 \
+\
+\cf3 #include \cf4 <iostream>\cf3 \
+\cf0 \
+\cf3 #include \cf4 <opencv2/opencv.hpp>\cf3 \
+#include \cf4 <opencv2/highgui/highgui.hpp>\cf3 \
+\cf0 \
+\cf5 using\cf0  \cf5 namespace\cf0  \cf6 std\cf0 ; \
+\
+\cf5 double\cf0  D0=\cf7 30\cf0 ;\
+\cf5 void\cf0  ILPF(\cf6 CvMat\cf0 * src, \cf5 const\cf0  \cf5 double\cf0  D0)\
+\{\
+	\cf5 int\cf0  i, j;\
+	\cf5 int\cf0  state = -\cf7 1\cf0 ;\
+	\cf5 double\cf0  tempD;	\
+	\cf5 long\cf0  width, height;\
+	width = src->\cf6 width\cf0 ;\
+	height = src->\cf6 height\cf0 ;\
+    \
+	\cf5 long\cf0  x, y;\
+	x = width / \cf7 2\cf0 ;\
+	y = height / \cf7 2\cf0 ;\
+    \
+	\cf6 CvMat\cf0 * H_mat;\
+	H_mat = \cf8 cvCreateMat\cf0 (src->\cf6 height\cf0 ,src->\cf6 width\cf0 , \cf3 CV_64FC2\cf0 );\
+	\cf5 for\cf0 (i = \cf7 0\cf0 ; i < height; i++)\
+	\{\
+		\cf5 for\cf0 (j = \cf7 0\cf0 ; j < width; j++)\
+		\{\
+			\cf5 if\cf0 (i > y && j > x)\
+			\{\
+				state = \cf7 3\cf0 ;\
+			\}\
+			\cf5 else\cf0  \cf5 if\cf0 (i > y)\
+			\{\
+				state = \cf7 1\cf0 ;\
+			\}\
+			\cf5 else\cf0  \cf5 if\cf0 (j > x)\
+			\{\
+				state = \cf7 2\cf0 ;\
+			\}\
+			\cf5 else\cf0 \
+			\{\
+				state = \cf7 0\cf0 ;\
+			\}\
+            \
+			\cf5 switch\cf0 (state)\
+			\{\
+                \cf5 case\cf0  \cf7 0\cf0 :\
+                    tempD = (\cf5 double\cf0 )  (i * i + j * j);tempD = \cf8 sqrt\cf0 (tempD);\cf5 break\cf0 ;\
+                \cf5 case\cf0  \cf7 1\cf0 :\
+                    tempD = (\cf5 double\cf0 )  ((height - i) * (height - i) + j * j);tempD = \cf8 sqrt\cf0 (tempD);\cf5 break\cf0 ;\
+                \cf5 case\cf0  \cf7 2\cf0 :\
+                    tempD = (\cf5 double\cf0 )  (i * i + (width - j) * (width - j));tempD = \cf8 sqrt\cf0 (tempD);\cf5 break\cf0 ;\
+                \cf5 case\cf0  \cf7 3\cf0 :\
+                    tempD = (\cf5 double\cf0 )  ((height - i) * (height - i) + (width - j) * (width - j));tempD = \cf8 sqrt\cf0 (tempD);\cf5 break\cf0 ;\
+                \cf5 default\cf0 :\
+                    \cf5 break\cf0 ;\
+			\}\
+            \
+			\cf2 //
+\f1 \'b6\'fe\'ce\'ac\'b8\'df\'cb\'b9\'b5\'cd\'cd\'a8\'c2\'cb\'b2\'a8\'c6\'f7\'b4\'ab\'b5\'dd\'ba\'af\'ca\'fd
+\f0 \cf0 \
+            tempD = \cf8 exp\cf0 (-\cf7 0.5\cf0  * \cf8 pow\cf0 (tempD / D0, \cf7 2\cf0 ));\
+            ((\cf5 double\cf0 *)(H_mat->\cf6 data\cf0 .\cf6 ptr\cf0  + H_mat->\cf6 step\cf0  * i))[j * \cf7 2\cf0 ] = tempD;\
+            ((\cf5 double\cf0 *)(H_mat->\cf6 data\cf0 .\cf6 ptr\cf0  + H_mat->\cf6 step\cf0  * i))[j * \cf7 2\cf0  + \cf7 1\cf0 ] = \cf7 0.0\cf0 ;\
+            \
+			\cf2 //
+\f1 \'cb\'a5\'bc\'f5\'cf\'b5\'ca\'fd\'ce\'aa
+\f0 2
+\f1 \'b5\'c4\'b6\'fe\'ce\'ac\'d6\'b8\'ca\'fd\'b5\'cd\'cd\'a8\'c2\'cb\'b2\'a8\'c6\'f7\'b4\'ab\'b5\'dd\'ba\'af\'ca\'fd
+\f0 \cf0 \
+			\cf2 /*	tempD = exp(-pow(tempD / D0, 2));   \
+             ((double*)(H_mat->data.ptr + H_mat->step * i))[j * 2] = tempD;\
+             ((double*)(H_mat->data.ptr + H_mat->step * i))[j * 2 + 1] = 0.0;*/\cf0 \
+            \
+			\cf2 //2
+\f1 \'bd\'d7\'b0\'cd\'cc\'d8\'ce\'d6\'cb\'bc\'b5\'cd\'cd\'a8\'c2\'cb\'b2\'a8\'c6\'f7\'b4\'ab\'b5\'dd\'ba\'af\'ca\'fd
+\f0 \cf0 \
+			\cf2 /*tempD = 1 / (1 + pow(tempD / D0, 2 * 2));\
+             ((double*)(H_mat->data.ptr + H_mat->step * i))[j * 2] = tempD;\
+             ((double*)(H_mat->data.ptr + H_mat->step * i))[j * 2 + 1] = 0.0;*/\cf0 \
+            \
+            \
+			\cf2 //
+\f1 \'b6\'fe\'ce\'ac\'c0\'ed\'cf\'eb\'b5\'cd\'cd\'a8\'c2\'cb\'b2\'a8\'c6\'f7\'b4\'ab\'b5\'dd\'ba\'af\'ca\'fd
+\f0 \cf0 \
+			\cf2 //	if(tempD <= D0)\cf0 \
+			\cf2 //	\{\cf0 \
+			\cf2 //		((double*)(H_mat->data.ptr + H_mat->step * i))[j *2] = 1.0;\cf0 \
+			\cf2 //    	//((double*)(H_mat->data.ptr + H_mat->step * i))[j * 2 + 1] = 0.0;\cf0 \
+			\cf2 //	\}\cf0 \
+			\cf2 //	else\cf0 \
+			\cf2 //	\{\cf0 \
+			\cf2 //		((double*)(H_mat->data.ptr + H_mat->step * i))[j*2 ] = 0.0;\cf0 \
+			\cf2 //    	//((double*)(H_mat->data.ptr + H_mat->step * i))[j * 2 + 1] = 0.0;\cf0 \
+			\cf2 //	\}\cf0 \
+		\}\
+	\}\
+	\cf8 cvMulSpectrums\cf0 (src, H_mat, src, \cf3 CV_DXT_ROWS\cf0 );\
+	\cf8 cvReleaseMat\cf0 (&H_mat);\
+\}\
+\
+\cf5 int\cf0  main(\cf5 int\cf0  argc, \cf5 char\cf0  ** argv)\
+\{\
+	\cf5 const\cf0  \cf5 char\cf0 * filename = argc >=\cf7 2\cf0  ? argv[\cf7 1\cf0 ] : \cf4 "Lena.jpg"\cf0 ;\
+	\cf6 IplImage\cf0  * im;\
+    \
+	\cf6 IplImage\cf0  * realInput;\
+	\cf6 IplImage\cf0  * imaginaryInput;\
+	\cf6 IplImage\cf0  * complexInput;\
+	\cf5 int\cf0  dft_M, dft_N;\
+	\cf6 CvMat\cf0 * dft_A, tmp, *dft_B;\
+	\cf6 IplImage\cf0  * image_Re;\
+	\cf6 IplImage\cf0  * image_Im;\
+	\cf5 double\cf0  m, M;\
+    \
+	im = \cf8 cvLoadImage\cf0 ( filename, \cf8 CV_TYZX_COLOR\cf0  );\
+	\cf5 if\cf0 ( !im )\
+		\cf5 return\cf0  -\cf7 1\cf0 ;\
+    \
+	realInput = \cf8 cvCreateImage\cf0 ( \cf8 cvGetSize\cf0 (im), \cf3 IPL_DEPTH_64F\cf0 , \cf7 1\cf0 );\
+	imaginaryInput = \cf8 cvCreateImage\cf0 ( \cf8 cvGetSize\cf0 (im), \cf3 IPL_DEPTH_64F\cf0 , \cf7 1\cf0 );\
+	complexInput = \cf8 cvCreateImage\cf0 ( \cf8 cvGetSize\cf0 (im), \cf3 IPL_DEPTH_64F\cf0 , \cf7 2\cf0 );\
+    \
+	\cf3 cvScale\cf0 (im, realInput, \cf7 1.0\cf0 , \cf7 0.0\cf0 );\cf2 //
+\f1 \'d7\'f6\'cf\'df\'d0\'d4\'b1\'e4\'bb\'bb\'a3\'ac
+\f0 [0,1]\cf0 \
+	\cf3 cvZero\cf0 (imaginaryInput);\cf2 //
+\f1 \'cd\'bc\'cf\'f1\'c7\'e5\'c1\'e3
+\f0 \cf0 \
+	\cf8 cvMerge\cf0 (realInput, imaginaryInput, \cf5 NULL\cf0 , \cf5 NULL\cf0 , complexInput);\cf2 //
+\f1 \'b0\'d1\'cb\'c4\'cd\'a8\'b5\'c0
+\f0 dst0
+\f1 \'a3\'ac
+\f0 dst1
+\f1 \'a3\'ac
+\f0 dst2,dst3
+\f1 \'ba\'cf\'ce\'aa
+\f0 dst
+\f1 \'a1\'a3
+\f0 \cf0 \
+    \
+	dft_M = \cf8 cvGetOptimalDFTSize\cf0 ( im->\cf6 height\cf0  - \cf7 1\cf0  );\cf2 //
+\f1 \'b6\'d4\'d3\'da\'b8\'f8\'b6\'a8\'b5\'c4\'ca\'b8\'c1\'bf\'b3\'df\'b4\'e7\'b7\'b5\'bb\'d8\'d7\'ee\'d3\'c5
+\f0 DFT
+\f1 \'b3\'df\'b4\'e7
+\f0 \cf0 \
+	dft_N = \cf8 cvGetOptimalDFTSize\cf0 ( im->\cf6 width\cf0  - \cf7 1\cf0  );\
+	dft_B = \cf8 cvCreateMat\cf0 ( dft_M, dft_N, \cf3 CV_64FC2\cf0  );\cf2 //
+\f1 \'b4\'b4\'bd\'a8\'be\'d8\'d5\'f3
+\f0 \cf0 \
+	dft_A = \cf8 cvCreateMat\cf0 ( dft_M, dft_N, \cf3 CV_64FC2\cf0  );\
+	\cf3 cvZero\cf0 (dft_A);\cf2 //
+\f1 \'d4\'ad\'c0\'b4\'b4\'fa\'c2\'eb\'d6\'d0\'a3\'ac\'c3\'bb\'d3\'d0\'d5\'e2\'be\'e4\'bb\'b0\'a1\'a3
+\f0 \cf0 \
+	\cf3 cvZero\cf0 (dft_B);\
+    \
+	image_Re = \cf8 cvCreateImage\cf0 ( \cf8 cvSize\cf0 (dft_N, dft_M), \cf3 IPL_DEPTH_64F\cf0 , \cf7 1\cf0 );\
+	image_Im = \cf8 cvCreateImage\cf0 ( \cf8 cvSize\cf0 (dft_N, dft_M), \cf3 IPL_DEPTH_64F\cf0 , \cf7 1\cf0 );\
+    \
+	\cf8 cvGetSubRect\cf0 ( dft_A,&tmp, \cf8 cvRect\cf0 (\cf7 0\cf0 ,\cf7 0\cf0 , im->\cf6 width\cf0 , im->\cf6 height\cf0 ));\cf2 //
+\f1 \'b7\'b5\'bb\'d8\'ca\'e4\'c8\'eb\'b5\'c4\'cd\'bc\'cf\'f1\'bb\'f2\'be\'d8\'d5\'f3\'b5\'c4\'be\'d8\'d0\'ce\'ca\'fd\'d7\'e9\'d7\'d3\'bc\'af\'b5\'c4\'be\'d8\'d5\'f3\'cd\'b7
+\f0  \cf0 \
+	\cf8 cvCopy\cf0 ( complexInput, &tmp, \cf5 NULL\cf0  );\
+    \
+	\cf8 cvDFT\cf0 ( dft_A, dft_A, \cf3 CV_DXT_FORWARD\cf0 , complexInput->\cf6 height\cf0  );\
+    \
+	\cf9 ILPF\cf0 (dft_A,  \cf10 D0\cf0 );\
+	\cf8 cvDFT\cf0 ( dft_A, dft_A, \cf3 CV_DXT_INVERSE\cf0  , complexInput->\cf6 height\cf0  );\cf2 ///
+\f1 \'c4\'e6\'b1\'e4\'bb\'bb
+\f0  
+\f1 \'b6\'fe\'ce\'ac\'b8\'b5\'c1\'a2\'d2\'b6\'b1\'e4\'bb\'bb
+\f0 \cf0 \
+    \
+	\cf8 cvNamedWindow\cf0 (\cf4 "win"\cf0 );\
+	\cf8 cvNamedWindow\cf0 (\cf4 "magnitude"\cf0 );\
+	\cf8 cvShowImage\cf0 (\cf4 "win"\cf0 , im);\
+    \
+	\cf8 cvSplit\cf0 ( dft_A, image_Re, image_Im, \cf7 0\cf0 , \cf7 0\cf0  );\
+    \
+	\cf8 cvMinMaxLoc\cf0 (image_Re, &m, &M, \cf5 NULL\cf0 , \cf5 NULL\cf0 , \cf5 NULL\cf0 );\cf2 //
+\f1 \'b2\'e9\'d5\'d2\'ca\'fd\'d7\'e9\'ba\'cd\'d7\'d3\'ca\'fd\'d7\'e9\'b5\'c4\'c8\'ab\'be\'d6\'d7\'ee\'d0\'a1\'d6\'b5\'ba\'cd\'d7\'ee\'b4\'f3\'d6\'b5
+\f0  \cf0 \
+	\cf3 cvScale\cf0 (image_Re, image_Re, \cf7 1.0\cf0 /(M-m), \cf7 1.0\cf0 *(-m)/(M-m));\
+    \
+	\cf8 cvShowImage\cf0 (\cf4 "magnitude"\cf0 , image_Re);\
+    \
+	\cf8 cvNamedWindow\cf0 (\cf4 "image_im"\cf0 );\
+	\cf8 cvShowImage\cf0 (\cf4 "image_im"\cf0 ,image_Im);\
+    \
+	\cf8 cvWaitKey\cf0 (-\cf7 1\cf0 );\
+	\cf5 return\cf0  \cf7 0\cf0 ;\
+\}\
+\
+\cf3 #include \cf4 <highgui.h>\cf3  \
+#include \cf4 <cv.h>\cf3  \
+#include \cf4 <stdio.h>\cf3  \
+\cf0     \cf5 int\cf0  main(\cf5 int\cf0  argc,\cf5 char\cf0 **argv) \
+    \{ \
+        IplImage* src, *dst, src_f; \
+        \cf5 float\cf0  k[\cf7 9\cf0 ] = \{ \cf7 1.0\cf0 , -\cf7 2.0\cf0 , \cf7 1.0\cf0 , \cf7 4.0\cf0 , -\cf7 2.0\cf0 , -\cf7 1.0\cf0 , \cf7 4.0\cf0 , -\cf7 2.0\cf0 , \cf7 2.0\cf0  \}; \cf2 //
+\f1 \'ba\'cb
+\f0  \cf0 \
+        CvMat km = cvMat( \cf7 3\cf0 , \cf7 3\cf0 , \cf3 CV_32FC1\cf0 , k ); \cf2 //
+\f1 \'b9\'b9\'d4\'ec\'b5\'a5\'cd\'a8\'b5\'c0\'b8\'a1\'b5\'e3\'be\'d8\'d5\'f3\'a3\'ac\'bd\'ab\'cd\'bc\'cf\'f1
+\f0 IplImage
+\f1 \'bd\'e1\'b9\'b9\'d7\'aa\'bb\'bb\'ce\'aa\'cd\'bc\'cf\'f1\'ca\'fd\'d7\'e9
+\f0  \cf0 \
+        src = cvLoadImage( argv[\cf7 1\cf0 ] ); \
+        dst = cvCreateImage( cvGetSize(src), \cf3 IPL_DEPTH_8U\cf0 , \cf7 3\cf0  ); \
+        cvNamedWindow( \cf4 "src"\cf0 , \cf7 0\cf0  ); \
+        cvShowImage( \cf4 "src"\cf0 , src ); \
+        cvNamedWindow( \cf4 "Filtering"\cf0 , \cf7 0\cf0  ); \
+        cvFilter2D( src, dst, &km, cvPoint( -\cf7 1\cf0 , -\cf7 1\cf0  ) ); \cf2 //
+\f1 \'c9\'e8\'b2\'ce\'bf\'bc\'b5\'e3\'ce\'aa\'ba\'cb\'b5\'c4\'d6\'d0\'d0\'c4
+\f0  \cf0 \
+        cvShowImage( \cf4 "Filtering"\cf0 , dst ); cvWaitKey(\cf7 0\cf0 ); cvReleaseImage( &src ); \
+        cvReleaseImage( &dst ); \
+        \cf5 return\cf0  \cf7 0\cf0 ; \
+    \}\
+\
+\
+\
+\cf2 \
+</span> #include <high\uc0\u8203 \u8203 gui.h> #include <cv.h> #include <stdio.h> int main(int argc,char**argv) \{ IplImage* src, *dst, src_f; float k[9] = \{ 1.0 , -2.0, 1.0, 4.0, -2.0, -1.0, 4.0, -2.0, 2.0 \}; //
+\f1 \'ba\'cb
+\f0 CvMat km = cvMat( 3, 3, CV_32FC1, k ); //
+\f1 \'98\'8b\'d4\'ec\'86\'ce\'cd\'a8\'b5\'c0\'b8\'a1\'fc\'63\'be\'d8\'ea\'87\'a3\'ac\'8c\'a2\'88\'44\'cf\'f1
+\f0 IplImage
+\f1 \'bd\'59\'98\'8b\'de\'44\'93\'51\'9e\'e9\'88\'44\'cf\'f1\'94\'b5\'bd\'4d
+\f0 src = cvLoadImage( argv[1] ); dst = cvCreateImage( cvGetSize(src), IPL_DEPTH_8U, 3 ); cvNamedWindow( "src", 0 ); cvShowImage( "src", src ); cvNamedWindow( "Filtering", 0 ); cvFilter2D( src, dst, &km, cvPoint( -1, -1 ) ); //
+\f1 \'d4\'4f\'85\'a2\'bf\'bc\'fc\'63\'9e\'e9\'ba\'cb\'b5\'c4\'d6\'d0\'d0\'c4
+\f0 cvShowImage( "Filtering", dst ); cvWaitKey(0); cvReleaseImage( &src ); cvReleaseImage( &dst ); return 0; \}}
